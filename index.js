@@ -73,17 +73,22 @@ class Particle {
     this.radius = radius
     this.color = color
     this.velocity = velocity
+    this.alpha = 1
   }
   darw() {
+    c.save()
+    c.globalAlpha = 0.1
     c.beginPath()
     c.arc(this.x, this.y, this.radius, 0, Math.PI * 2 ,false)
     c.fillStyle = this.color
     c.fill()
+    c.restore()
   }
   update() {
     this.darw()
     this.x = this.x + this.velocity.x
     this.y = this.y + this.velocity.y
+    this.alpha -= 0.01
   }
 }
 
@@ -132,8 +137,13 @@ function animate() {
   c.fillStyle = 'rgba(0,0,0, 0.1)'
   c.fillRect(0,0, canvas.width, canvas.height)
   player.darw()
-  particles.forEach(particle => {
-    particle.update()
+  particles.forEach((particle,index) => {
+    if (particle.alpha <= 0) {
+      particles.splice(index, 1)
+    } else {
+      particle.update()
+    }
+
   })
   projectiles.forEach((projectile, index) => {
     projectile.update()
@@ -166,17 +176,23 @@ function animate() {
 
       // when projectiles touch enemy
       if (dist - enemy.radius - projectile.radius < 1) {
-        for (let i = 0; i < 8; i++) {
-          projectiles.push(new Particle(projectile.x, projectile.y,
-            3, enemy.color, {
-              x: Math.random() - 0.5,
-              y: Math.random() - 0.5
-          }))
+        //create explosions
+        for (let i = 0; i < enemy.radius * 2; i++) {
+          particles.push(new Particle( //if you change particles to projectile it becomes nuclear difussion
+            projectile.x,
+            projectile.y, 
+            Math.random() * 3,
+            enemy.color,
+            {
+              x: (Math.random() - 0.5) * ( 4 * Math.random()),
+              y: (Math.random() - 0.5) * ( 4 * Math.random())
+            }
+          ))
         }
 
-        if (enemy.radius - 10 > 5) {
+        if (enemy.radius - 10 > 10) {
           gsap.to(enemy, {
-            radius: enemy.radius - 10
+            radius: enemy.radius - 15
           })
           setTimeout(()=>  {
           projectiles.splice(projectileIndex, 1)
